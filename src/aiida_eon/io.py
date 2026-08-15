@@ -8,26 +8,65 @@ come from ``chemparseplot.parse.eon.saddle_search.EONSaddleStatus``.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Mapping
 
 from eon_schema.config import format_ini_value, read_ini, write_ini
-from eon_schema.jobs import results_dat_to_dict as _schema_results_dat_to_dict
 from rgpycrumbs.eon.helpers import write_eon_config
 
 from chemparseplot.parse.eon.saddle_search import EONSaddleStatus
 
+try:
+    from eon_schema.jobs import results_dat_to_dict as _schema_results_dat_to_dict
+except ImportError:  # eon-schema < 0.2.3 (PyPI 0.2.2 has no jobs module)
+    _schema_results_dat_to_dict = None
+
 IniSections = dict[str, dict[str, Any]]
 
 _TIMING_KEYS = frozenset({"time_seconds", "user_time", "system_time"})
+_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _parse_scalar(raw: str) -> Any:
+    if "." in raw or "e" in raw.lower():
+        try:
+            return float(raw)
+        except ValueError:
+            pass
+    try:
+        return int(raw)
+    except ValueError:
+        return raw
+
+
+def _local_results_dat_to_dict(text: str) -> dict[str, Any]:
+    """Same contract as eon_schema.jobs.results_dat_to_dict plus last-token keys."""
+    results: dict[str, Any] = {}
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        if _KEY_RE.match(parts[-1]) and (
+            len(parts) > 2 or not _KEY_RE.match(parts[0])
+        ):
+            key = parts[-1]
+            raw = " ".join(parts[:-1])
+        else:
+            key = parts[1]
+            raw = parts[0]
+        results[key] = raw if " " in raw else _parse_scalar(raw)
+    return results
 
 
 def results_dat_to_dict(text: str) -> dict[str, Any]:
-    """Parse ``results.dat`` via eon-schema, then restore multi-word status.
+    """Parse ``results.dat``.
 
-    Client writers put ``describeStatus`` before the key
-    (``Too many iterations termination_reason_text``). eon-schema still
-    takes token[1] as the key; overlay the last-token form for that line.
+    Prefers ``eon_schema.jobs.results_dat_to_dict`` (0.2.3+). PyPI 0.2.2
+    has no jobs module, so the local implementation matches that
+    contract and restores multi-word ``termination_reason_text``.
     """
+    if _schema_results_dat_to_dict is None:
+        return _local_results_dat_to_dict(text)
     parsed = _schema_results_dat_to_dict(text)
     for line in text.splitlines():
         parts = line.split()
@@ -46,7 +85,7 @@ def parse_fd_table(text: str) -> dict[str, Any]:
         if not parts:
             continue
         if len(parts) >= 2 and parts[1] in _TIMING_KEYS:
-            extras.update(_schema_results_dat_to_dict(line))
+            extras.update(results_dat_to_dict(line))
             continue
         if header is None:
             header = parts
@@ -54,7 +93,7 @@ def parse_fd_table(text: str) -> dict[str, Any]:
         try:
             rows.append([float(item) for item in parts])
         except ValueError:
-            extras.update(_schema_results_dat_to_dict(line))
+            extras.update(results_dat_to_dict(line))
     out: dict[str, Any] = {"table": rows, **extras}
     if header is not None:
         out["table_header"] = header

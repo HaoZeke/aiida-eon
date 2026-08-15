@@ -3,7 +3,9 @@
 ## 0.3.0
 
 - INI write/read is ``eon_schema.config`` / ``rgpycrumbs.eon.helpers.write_eon_config``.
-- ``results.dat`` parse is ``eon_schema.jobs.results_dat_to_dict``.
+- ``results.dat`` uses ``eon_schema.jobs`` when present (0.2.3+);
+  PyPI 0.2.2 has no jobs module, so the local parse matches that
+  contract plus multi-word status text.
 - Saddle status codes are ``chemparseplot.parse.eon.saddle_search.EONSaddleStatus``.
 - ``ConData.to_ase`` / ``from_ase`` go through ``chemparseplot.parse.eon.con_io``.
 - Requires Python 3.11+ (eon-schema).
