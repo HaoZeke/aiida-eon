@@ -10,6 +10,13 @@ This replaces the 2021 cookiecutter stubs (`DiffCalculation` wrapping
 `diff`). The reserved registry name `aiida-eonclient` stays unused so
 the entry-point prefix stays `eon`.
 
+File I/O is not reimplemented here. `config.ini` is
+`rgpycrumbs.eon.helpers.write_eon_config` /
+`eon_schema.config.write_ini`. `results.dat` is
+`eon_schema.jobs.results_dat_to_dict`. Saddle codes are
+`chemparseplot.parse.eon.saddle_search.EONSaddleStatus`. CON to ASE is
+`chemparseplot.parse.eon.con_io`.
+
 ## Install
 
 ```shell

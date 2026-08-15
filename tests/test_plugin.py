@@ -85,4 +85,4 @@ def test_elja_helpers():
 def test_version():
     import aiida_eon
 
-    assert aiida_eon.__version__ == "0.2.1"
+    assert aiida_eon.__version__ == "0.3.0"

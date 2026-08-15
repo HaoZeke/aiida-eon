@@ -4,25 +4,27 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiida-eon"
-version = "0.2.1"
+version = "0.3.0"
 description = "AiiDA 2 plugin for eOn: eonclient jobs, CON data, and workchains"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Rohit Goswami", email = "rog32@hi.is" }]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Framework :: AiiDA",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Chemistry",
 ]
 dependencies = [
     "aiida-core>=2.6,<3",
+    "rgpycrumbs>=1.9",
+    "eon-schema>=0.2.0",
+    "chemparseplot>=1.8",
 ]
 
 [project.optional-dependencies]

@@ -34,3 +34,32 @@ class ConData(SinglefileData):
         out = Path(path)
         out.write_text(self.get_text(), encoding="utf-8")
         return out
+
+    def to_ase(self):
+        """ASE Atoms list via chemparseplot (readcon)."""
+        import tempfile
+
+        from chemparseplot.parse.eon.con_io import read_con_as_ase
+
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".con", delete=False, encoding="utf-8"
+        ) as handle:
+            handle.write(self.get_text())
+            tmp = Path(handle.name)
+        try:
+            return read_con_as_ase(tmp)
+        finally:
+            tmp.unlink(missing_ok=True)
+
+    @classmethod
+    def from_ase(cls, atoms, filename: str = "pos.con") -> ConData:
+        """Write ASE Atoms (or a list) as CON via chemparseplot."""
+        import tempfile
+
+        from chemparseplot.parse.eon.con_io import write_atoms_as_con
+
+        series = atoms if isinstance(atoms, (list, tuple)) else [atoms]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / filename
+            write_atoms_as_con(path, series)
+            return cls.from_path(path, filename=filename)

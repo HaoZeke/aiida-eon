@@ -439,6 +439,17 @@ def canonicalize_parameters(sections: dict) -> dict:
     return out
 
 
+def retrieve_list_for(spec: JobSpec) -> list[str]:
+    """Deduplicated retrieve list for a job spec."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for name in spec.retrieve_globs + spec.output_cons + spec.extra_outputs:
+        if name not in seen:
+            seen.add(name)
+            out.append(name)
+    return out
+
+
 def job_from_parameters(sections: dict) -> str:
     """Read ``[Main] job`` from a nested INI dict."""
     main = sections.get("Main") or sections.get("main") or {}

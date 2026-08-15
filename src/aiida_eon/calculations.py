@@ -12,7 +12,7 @@ from aiida.engine import CalcJob
 from aiida.orm import Dict, FolderData, SinglefileData
 
 from .data import ConData
-from .io import retrieve_list_for, write_ini
+from .io import write_ini
 from .jobs import (
     PORT_TO_DEST,
     canonicalize_parameters,
@@ -21,6 +21,7 @@ from .jobs import (
     job_from_parameters,
     normalize_job,
     required_inputs_for,
+    retrieve_list_for,
 )
 
 _STRUCTURE_TYPES = (SinglefileData, ConData)

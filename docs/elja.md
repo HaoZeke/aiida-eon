@@ -17,7 +17,7 @@ Live `sinfo` also lists `any_cpu`, `short`, `long`, `48cpu_*`,
 
 ```shell
 python3 -m venv ~/aiida-venv
-~/aiida-venv/bin/pip install 'aiida-core>=2.6,<3' aiida-eon
+~/aiida-venv/bin/pip install 'aiida-core>=2.6,<3' 'aiida-eon'
 git clone https://github.com/HaoZeke/aiida-eon.git
 cd aiida-eon
 VERDI=~/aiida-venv/bin/verdi

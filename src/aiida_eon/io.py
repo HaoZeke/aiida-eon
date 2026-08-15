@@ -1,94 +1,39 @@
-"""eOn file adapters: ``config.ini`` and ``results.dat``.
+"""eOn file adapters.
 
-These match ``eon_schema.config.ini.write_ini`` and
-``eon_schema.jobs.results_dat_to_dict`` so the plugin does not require
-the eOn monorepo at import time.
+INI authorship is ``eon_schema.config.write_ini``, the same function
+``rgpycrumbs.eon.helpers.write_eon_config`` wraps. ``results.dat`` goes
+through ``eon_schema.jobs.results_dat_to_dict``. Saddle status codes
+come from ``chemparseplot.parse.eon.saddle_search.EONSaddleStatus``.
 """
 
 from __future__ import annotations
 
-import configparser
-import re
-from pathlib import Path
 from typing import Any, Mapping
 
-_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+from eon_schema.config import format_ini_value, read_ini, write_ini
+from eon_schema.jobs import results_dat_to_dict as _schema_results_dat_to_dict
+from rgpycrumbs.eon.helpers import write_eon_config
 
-from .jobs import JobSpec
+from chemparseplot.parse.eon.saddle_search import EONSaddleStatus
 
 IniSections = dict[str, dict[str, Any]]
 
 _TIMING_KEYS = frozenset({"time_seconds", "user_time", "system_time"})
 
 
-def format_ini_value(value: Any) -> str:
-    """Format a Python value for eOn ``config.ini`` (lowercase bools)."""
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if value is None:
-        return ""
-    return str(value)
-
-
-def write_ini(path: str | Path, sections: Mapping[str, Mapping[str, Any]]) -> Path:
-    """Write nested section dicts to ``config.ini``, preserving option case."""
-    out = Path(path)
-    parser = configparser.ConfigParser()
-    parser.optionxform = str  # type: ignore[method-assign, assignment]
-    for section, options in sections.items():
-        if not parser.has_section(section):
-            parser.add_section(section)
-        for key, val in options.items():
-            parser.set(section, str(key), format_ini_value(val))
-    out.parent.mkdir(parents=True, exist_ok=True)
-    with out.open("w", encoding="utf-8") as handle:
-        parser.write(handle)
-    return out
-
-
-def read_ini(path: str | Path) -> IniSections:
-    """Read ``config.ini`` into a nested dict (case-preserving keys)."""
-    parser = configparser.ConfigParser()
-    parser.optionxform = str  # type: ignore[method-assign, assignment]
-    parsed = Path(path)
-    if not parser.read(parsed):
-        raise FileNotFoundError(f"config.ini not found: {path}")
-    return {section: dict(parser.items(section)) for section in parser.sections()}
-
-
-def _parse_scalar(raw: str) -> Any:
-    if "." in raw or "e" in raw.lower():
-        try:
-            return float(raw)
-        except ValueError:
-            pass
-    try:
-        return int(raw)
-    except ValueError:
-        return raw
-
-
 def results_dat_to_dict(text: str) -> dict[str, Any]:
-    """Parse classic ``results.dat`` lines into a dict.
+    """Parse ``results.dat`` via eon-schema, then restore multi-word status.
 
-    Writers use ``value key``. Multi-word status strings put the key
-    last (``Too many iterations termination_reason_text``).
+    Client writers put ``describeStatus`` before the key
+    (``Too many iterations termination_reason_text``). eon-schema still
+    takes token[1] as the key; overlay the last-token form for that line.
     """
-    results: dict[str, Any] = {}
+    parsed = _schema_results_dat_to_dict(text)
     for line in text.splitlines():
         parts = line.split()
-        if len(parts) < 2:
-            continue
-        if _KEY_RE.match(parts[-1]) and (
-            len(parts) > 2 or not _KEY_RE.match(parts[0])
-        ):
-            key = parts[-1]
-            raw = " ".join(parts[:-1])
-        else:
-            key = parts[1]
-            raw = parts[0]
-        results[key] = raw if " " in raw else _parse_scalar(raw)
-    return results
+        if len(parts) > 2 and parts[-1] == "termination_reason_text":
+            parsed["termination_reason_text"] = " ".join(parts[:-1])
+    return parsed
 
 
 def parse_fd_table(text: str) -> dict[str, Any]:
@@ -101,7 +46,7 @@ def parse_fd_table(text: str) -> dict[str, Any]:
         if not parts:
             continue
         if len(parts) >= 2 and parts[1] in _TIMING_KEYS:
-            extras[parts[1]] = _parse_scalar(parts[0])
+            extras.update(_schema_results_dat_to_dict(line))
             continue
         if header is None:
             header = parts
@@ -109,8 +54,7 @@ def parse_fd_table(text: str) -> dict[str, Any]:
         try:
             rows.append([float(item) for item in parts])
         except ValueError:
-            if len(parts) >= 2:
-                extras[parts[1]] = _parse_scalar(parts[0])
+            extras.update(_schema_results_dat_to_dict(line))
     out: dict[str, Any] = {"table": rows, **extras}
     if header is not None:
         out["table_header"] = header
@@ -118,9 +62,12 @@ def parse_fd_table(text: str) -> dict[str, Any]:
 
 
 def job_failed(parsed: Mapping[str, Any]) -> bool:
-    """True when results.dat reports a failed client job."""
+    """True when results.dat reports a failed client job.
+
+    Saddle / process-search codes are ``EONSaddleStatus`` (GOOD == 0).
+    """
     reason = parsed.get("termination_reason")
-    if isinstance(reason, int) and reason != 0:
+    if isinstance(reason, int) and reason != EONSaddleStatus.GOOD.value:
         return True
     good = parsed.get("good")
     if good is False:
@@ -143,7 +90,7 @@ def parse_results_dat(text: str, style: str = "value_key") -> dict[str, Any]:
 
 
 def job_result_scalars(parsed: Mapping[str, Any]) -> dict[str, Any]:
-    """Map parsed results.dat keys onto JobResult-oriented names."""
+    """JobResult-shaped view. Missing ``termination_reason`` stays None."""
     out: dict[str, Any] = {
         "status_code": parsed.get("termination_reason"),
         "status_text": parsed.get("termination_reason_text", ""),
@@ -196,17 +143,6 @@ def job_result_scalars(parsed: Mapping[str, Any]) -> dict[str, Any]:
     return out
 
 
-def retrieve_list_for(spec: JobSpec) -> list[str]:
-    """Deduplicated retrieve list for a job spec."""
-    seen: set[str] = set()
-    out: list[str] = []
-    for name in spec.retrieve_globs + spec.output_cons + spec.extra_outputs:
-        if name not in seen:
-            seen.add(name)
-            out.append(name)
-    return out
-
-
 def link_label(name: str) -> str:
     """AiiDA link label: no leading underscore, no dots."""
     cleaned = name.replace(".", "_").replace("-", "_").replace("/", "_")
@@ -230,3 +166,18 @@ OUTPUT_CON_NAMES = (
     "minimization.con",
     "climb.con",
 )
+
+__all__ = [
+    "EONSaddleStatus",
+    "OUTPUT_CON_NAMES",
+    "format_ini_value",
+    "job_failed",
+    "job_result_scalars",
+    "link_label",
+    "parse_fd_table",
+    "parse_results_dat",
+    "read_ini",
+    "results_dat_to_dict",
+    "write_eon_config",
+    "write_ini",
+]

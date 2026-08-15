@@ -3,14 +3,28 @@
 from pathlib import Path
 
 from aiida_eon.io import (
+    EONSaddleStatus,
     job_failed,
     job_result_scalars,
+    link_label,
     parse_fd_table,
     parse_results_dat,
     read_ini,
     results_dat_to_dict,
+    write_eon_config,
     write_ini,
 )
+
+
+def test_io_delegates_to_ecosystem():
+    from eon_schema.config import write_ini as schema_write
+    from rgpycrumbs.eon.helpers import write_eon_config as official
+
+    assert write_ini is schema_write
+    assert write_eon_config is official
+    assert EONSaddleStatus.GOOD.value == 0
+    assert link_label("_potcalls.json") == "potcalls_json"
+    assert link_label("neb.dat") == "neb_dat"
 
 
 def test_write_ini_preserves_section_and_option_case(tmp_path: Path):

@@ -14,9 +14,8 @@ from aiida_eon.jobs import (
     job_from_parameters,
     normalize_job,
     required_inputs_for,
+    retrieve_list_for,
 )
-from aiida_eon.io import link_label
-from aiida_eon.io import retrieve_list_for
 
 
 def test_all_makejob_tokens_registered():
@@ -102,11 +101,6 @@ def test_neb_file_initializer_drops_endpoints():
     }
     assert required_inputs_for(spec, sections) == ()
     assert "reactant.con" in required_inputs_for(spec, {"Main": {"job": "neb"}})
-
-
-def test_link_label_strips_leading_underscore():
-    assert link_label("_potcalls.json") == "potcalls_json"
-    assert link_label("neb.dat") == "neb_dat"
 
 
 def test_newer_surfaces_named():
