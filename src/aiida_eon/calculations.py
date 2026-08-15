@@ -96,7 +96,7 @@ class EonCalculation(CalcJob):
             "mode",
             valid_type=SinglefileData,
             required=False,
-            help="mode.dat seed.",
+            help="Mode seed written as direction.dat (client reads direction.dat).",
         )
         spec.input(
             "ts",
@@ -122,7 +122,7 @@ class EonCalculation(CalcJob):
             "potfiles",
             valid_type=FolderData,
             required=False,
-            help="Copied to potfiles/ (LAMMPS, VASP, pyamff, ...).",
+            help="Flattened into the client CWD (in.lammps, POTCAR, ...).",
         )
         spec.output("results", valid_type=Dict, help="Parsed results.dat.")
         spec.output(
