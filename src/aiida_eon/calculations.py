@@ -15,10 +15,12 @@ from .data import ConData
 from .io import retrieve_list_for, write_ini
 from .jobs import (
     PORT_TO_DEST,
+    canonicalize_parameters,
     get_job_spec,
     is_client_job,
     job_from_parameters,
     normalize_job,
+    required_inputs_for,
 )
 
 _STRUCTURE_TYPES = (SinglefileData, ConData)
@@ -159,9 +161,10 @@ class EonCalculation(CalcJob):
         )
 
     def prepare_for_submission(self, folder):
-        sections = self.inputs.parameters.get_dict()
-        if not isinstance(sections, dict) or not sections:
+        raw = self.inputs.parameters.get_dict()
+        if not isinstance(raw, dict) or not raw:
             raise ValueError("parameters must be a non-empty nested dict of INI sections")
+        sections = canonicalize_parameters(raw)
         job = job_from_parameters(sections)
         if not is_client_job(job):
             raise ValueError(
@@ -203,12 +206,16 @@ class EonCalculation(CalcJob):
         if "potfiles" in self.inputs:
             folder_node: FolderData = self.inputs.potfiles
             for rel in folder_node.list_object_names():
-                dest = f"potfiles/{rel}"
+                # Client potentials open CWD files (in.lammps, POTCAR).
+                dest = rel
+                if dest in copied_dests:
+                    continue
                 local_copy_list.append((folder_node.uuid, rel, dest))
+                copied_dests.add(dest)
 
         missing = [
             name
-            for name in spec.required_inputs
+            for name in required_inputs_for(spec, sections)
             if name not in copied_dests
         ]
         if missing:

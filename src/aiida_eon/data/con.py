@@ -20,7 +20,7 @@ class ConData(SinglefileData):
 
     @classmethod
     def from_path(cls, path: str | Path, filename: str | None = None) -> ConData:
-        resolved = Path(path)
+        resolved = Path(path).expanduser().resolve(strict=True)
         return cls(file=str(resolved), filename=filename or resolved.name)
 
     def get_text(self) -> str:

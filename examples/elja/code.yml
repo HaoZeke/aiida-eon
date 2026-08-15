@@ -4,7 +4,5 @@ description: Prebuilt eOn client on Elja
 computer: elja-slurm
 filepath_executable: /path/to/prebuilt/eonclient
 default_calc_job_plugin: eon
-prepend_text: |
-  export IRA_LIB_DIR=${IRA_LIB_DIR:-$HOME/ira/lib}
-  export LD_LIBRARY_PATH="${IRA_LIB_DIR}:/opt/ohpc/pub/compiler/gcc/12.4.0/lib64:${LD_LIBRARY_PATH:-}"
+prepend_text: ""
 append_text: ""

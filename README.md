@@ -13,7 +13,7 @@ the entry-point prefix stays `eon`.
 ## Install
 
 ```shell
-pip install aiida-eon
+pip install -e .            # or pip install aiida-eon after the PyPI wheel
 verdi plugin list aiida.calculations eon
 verdi plugin list aiida.workflows
 verdi devel validate-plugins

@@ -9,7 +9,7 @@ from aiida.orm import Dict, SinglefileData
 from aiida.parsers.parser import Parser
 
 from .data import ConData
-from .io import job_result_scalars, parse_results_dat
+from .io import job_result_scalars, link_label, parse_results_dat
 from .jobs import get_job_spec, is_client_job, job_from_parameters
 
 _SIDECAR_SUFFIXES = (".dat", ".xyz", ".json", ".log", ".ckpt")
@@ -49,12 +49,17 @@ class EonParser(Parser):
             if path.suffix == ".con":
                 with self.retrieved.open(name, mode="rb") as handle:
                     node = ConData(file=handle, filename=path.name)
-                self.out(f"structures.{path.stem}", node)
+                key = link_label(path.stem)
+                dest = f"structures.{key}"
+                if dest not in self.outputs:
+                    self.out(dest, node)
                 continue
             if path.suffix in _SIDECAR_SUFFIXES or path.name == "client.log":
                 with self.retrieved.open(name, mode="rb") as handle:
                     node = SinglefileData(file=handle, filename=path.name)
-                key = path.name.replace(".", "_")
-                self.out(f"files.{key}", node)
+                key = link_label(path.name)
+                dest = f"files.{key}"
+                if dest not in self.outputs:
+                    self.out(dest, node)
 
         return ExitCode(0)

@@ -25,8 +25,16 @@ class EonSaddleSearchWorkChain(WorkChain):
         spec.outline(cls.setup, cls.run_client, cls.finalize)
         spec.expose_outputs(EonCalculation)
         spec.exit_code(400, "ERROR_SUBPROCESS", message="eonclient saddle search failed.")
+        spec.exit_code(
+            410,
+            "ERROR_MISSING_STRUCTURE",
+            message="Saddle search needs calc.structure.",
+        )
 
     def setup(self):
+        calc_in = self.exposed_inputs(EonCalculation, namespace="calc")
+        if "structure" not in calc_in:
+            return self.exit_codes.ERROR_MISSING_STRUCTURE
         raw = self.inputs.parameters.get_dict() if "parameters" in self.inputs else {}
         self.ctx.parameters = force_job(raw, "saddle_search")
 

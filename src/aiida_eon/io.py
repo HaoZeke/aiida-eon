@@ -175,6 +175,13 @@ def retrieve_list_for(spec: JobSpec) -> list[str]:
     return out
 
 
+def link_label(name: str) -> str:
+    """AiiDA link label: no leading underscore, no dots."""
+    cleaned = name.replace(".", "_").replace("-", "_").replace("/", "_")
+    cleaned = cleaned.lstrip("_")
+    return cleaned or "file"
+
+
 OUTPUT_CON_NAMES = (
     "min.con",
     "reactant.con",

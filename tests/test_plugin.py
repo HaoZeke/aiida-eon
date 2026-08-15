@@ -65,11 +65,13 @@ def test_workchain_specs_expose_calc():
 
 
 def test_elja_helpers():
-    from aiida_eon.helpers import ELJA_ACCOUNT, ELJA_QUEUE, elja_metadata
+    from aiida_eon.helpers import ELJA_ACCOUNT, ELJA_QUEUE, ELJA_QUEUE_ANY_CPU, elja_metadata
 
     meta = elja_metadata(wallclock_seconds=3600, cores=4)
     opts = meta["options"]
     assert opts["queue_name"] == ELJA_QUEUE
+    assert ELJA_QUEUE == "s-normal"
+    assert ELJA_QUEUE_ANY_CPU == "any_cpu"
     assert opts["account"] == ELJA_ACCOUNT
     assert opts["max_wallclock_seconds"] == 3600
     assert opts["resources"]["num_cores_per_machine"] == 4

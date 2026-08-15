@@ -9,6 +9,7 @@ are in-process replacements and are not scheduled by this plugin.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Mapping
 
 
 @dataclass(frozen=True)
@@ -64,17 +65,20 @@ def _client(
 CLIENT_JOBS: dict[str, JobSpec] = {
     "minimization": _client(
         "minimization",
+        required_inputs=("pos.con",),
         output_cons=("min.con", "minimization.con"),
         extra_outputs=("minimization.dat",),
         retrieve_globs=("minimization.dat",),
     ),
     "point": _client(
         "point",
+        required_inputs=("pos.con",),
         results_style="point",
         notes="results.dat keys are Energy / Max_Force.",
     ),
     "saddle_search": _client(
         "saddle_search",
+        required_inputs=("pos.con",),
         optional_inputs=("displacement.con", "direction.dat"),
         output_cons=("saddle.con", "climb.con"),
         extra_outputs=("mode.dat", "climb.dat"),
@@ -82,6 +86,7 @@ CLIENT_JOBS: dict[str, JobSpec] = {
     ),
     "process_search": _client(
         "process_search",
+        required_inputs=("pos.con",),
         optional_inputs=("displacement.con", "direction.dat"),
         output_cons=("reactant.con", "saddle.con", "product.con"),
         extra_outputs=("mode.dat",),
@@ -109,65 +114,74 @@ CLIENT_JOBS: dict[str, JobSpec] = {
     ),
     "hessian": _client(
         "hessian",
+        required_inputs=("pos.con",),
         extra_outputs=("hessian.dat", "hessian.ckpt"),
         retrieve_globs=("hessian.dat", "hessian.ckpt"),
     ),
     "finite_difference": _client(
         "finite_difference",
+        required_inputs=("pos.con",),
         results_style="fd_table",
         notes="results.dat is a dR/curvature table, not value-key.",
     ),
     "dynamics": _client(
         "dynamics",
+        required_inputs=("pos.con",),
         output_cons=("final.con",),
         results_style="empty",
         notes="No results.dat body; ClientEON still appends timing.",
     ),
     "monte_carlo": _client(
         "monte_carlo",
+        required_inputs=("pos.con",),
         optional_inputs=("pos_cp.con",),
         output_cons=("out.con",),
     ),
     "basin_hopping": _client(
         "basin_hopping",
+        required_inputs=("pos.con",),
         output_cons=("min.con",),
         extra_outputs=("bh.dat", "movie.xyz"),
         retrieve_globs=("bh.dat", "movie.xyz", "min_*.con", "energy_*.dat"),
     ),
     "global_optimization": _client(
         "global_optimization",
+        required_inputs=("pos.con",),
         extra_outputs=("monitoring.dat", "earr.dat"),
         retrieve_globs=("monitoring.dat", "earr.dat"),
         results_style="empty",
     ),
     "parallel_replica": _client(
         "parallel_replica",
+        required_inputs=("pos.con",),
         output_cons=("reactant.con", "product.con"),
     ),
     "safe_hyperdynamics": _client(
         "safe_hyperdynamics",
+        required_inputs=("pos.con",),
         output_cons=("reactant.con", "product.con", "saddle.con"),
     ),
     "tad": _client(
         "tad",
+        required_inputs=("pos.con",),
         output_cons=("reactant.con", "product.con", "saddle.con"),
     ),
     "replica_exchange": _client(
         "replica_exchange",
+        required_inputs=("pos.con",),
         output_cons=("pos_out.con",),
     ),
     "gp_surrogate": _client(
         "gp_surrogate",
         structure_dest="reactant.con",
         required_inputs=("reactant.con", "product.con"),
-        output_cons=("neb.con",),
-        extra_outputs=("neb.dat",),
-        retrieve_globs=("neb.dat", "neb_final_gpr_*.con"),
-        notes="WITH_GP_SURROGATE build. Wraps a sub_job, usually NEB.",
+        retrieve_globs=("neb_final_gpr_*.con",),
+        results_style="empty",
+        notes="WITH_GP_SURROGATE build. Writes neb_final_gpr_*.con; no saveData neb.con.",
     ),
     "oh_tst": _client(
         "oh_tst",
-        optional_inputs=("product.con",),
+        required_inputs=("pos.con", "product.con"),
         extra_outputs=("oh_tst_progression.dat",),
         retrieve_globs=("oh_tst_progression.dat",),
         notes="Client-only. Not in the server YAML / MainConfig job list.",
@@ -175,7 +189,7 @@ CLIENT_JOBS: dict[str, JobSpec] = {
     "structure_comparison": _client(
         "structure_comparison",
         structure_dest="matter1.con",
-        optional_inputs=("matter2.con",),
+        required_inputs=("matter1.con",),
         results_style="empty",
         notes="Client stub loads matter1.con only.",
     ),
@@ -359,7 +373,7 @@ PORT_TO_DEST: dict[str, str] = {
     "displacement": "displacement.con",
     "direction": "direction.dat",
     "matter2": "matter2.con",
-    "mode": "mode.dat",
+    "mode": "direction.dat",
     "ts": "ts.con",
 }
 
@@ -391,6 +405,32 @@ def get_job_spec(name: str) -> JobSpec:
 
 def is_client_job(name: str) -> bool:
     return normalize_job(name) in CLIENT_JOBS
+
+
+def neb_uses_file_path(sections: Mapping) -> bool:
+    """True when NEB reads ``initial_path_in`` instead of endpoints."""
+    neb = sections.get("Nudged Elastic Band") or sections.get(
+        "Nudged_Elastic_Band"
+    ) or {}
+    init = str(neb.get("initializer") or neb.get("initial_path") or "").lower()
+    return init == "file" and bool(neb.get("initial_path_in"))
+
+
+def required_inputs_for(spec: JobSpec, sections: Mapping | None = None) -> tuple[str, ...]:
+    """Required workdir files, relaxing NEB endpoints for initializer=file."""
+    if spec.name == "nudged_elastic_band" and sections and neb_uses_file_path(sections):
+        return ()
+    return spec.required_inputs
+
+
+def canonicalize_parameters(sections: dict) -> dict:
+    """Copy INI sections and rewrite Main.job to the magic_enum token."""
+    out = {name: dict(options) for name, options in sections.items()}
+    job = job_from_parameters(out)
+    main_key = "Main" if "Main" in out else "main"
+    out.setdefault(main_key, {})
+    out[main_key]["job"] = job
+    return out
 
 
 def job_from_parameters(sections: dict) -> str:

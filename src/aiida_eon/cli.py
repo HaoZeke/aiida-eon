@@ -15,14 +15,14 @@ def data_cli():
 
 
 @data_cli.command("export")
-@arguments.DATA()
+@arguments.DATUM()
 @click.option("-o", "--output", type=click.Path(), required=True)
 @decorators.with_dbenv()
-def export_con(data, output):
+def export_con(datum, output):
     """Write a stored CON node to a file."""
-    if not hasattr(data, "get_content"):
+    if not hasattr(datum, "get_content"):
         echo.echo_critical("node has no file content")
-    content = data.get_content()
+    content = datum.get_content()
     path = Path(output)
     if isinstance(content, bytes):
         path.write_bytes(content)

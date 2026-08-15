@@ -29,8 +29,16 @@ class EonMinimizeWorkChain(WorkChain):
             "ERROR_SUBPROCESS",
             message="eonclient minimization failed.",
         )
+        spec.exit_code(
+            410,
+            "ERROR_MISSING_STRUCTURE",
+            message="Minimization needs calc.structure.",
+        )
 
     def setup(self):
+        calc_in = self.exposed_inputs(EonCalculation, namespace="calc")
+        if "structure" not in calc_in:
+            return self.exit_codes.ERROR_MISSING_STRUCTURE
         raw = self.inputs.parameters.get_dict() if "parameters" in self.inputs else {}
         self.ctx.parameters = force_job(raw, "minimization")
 

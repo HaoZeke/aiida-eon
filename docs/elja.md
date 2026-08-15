@@ -10,18 +10,27 @@ Elja compute nodes cannot compile. Register a **prebuilt** `eonclient`.
 Login host example: `slogin1.rhi.hi.is` (`ssh elja`). Substitute your
 own account. The JCC campaign used user `rog32`, home
 `/users/home/rog32`, Slurm account `chem-ui`, partition `s-normal`.
+Live `sinfo` also lists `any_cpu`, `short`, `long`, `48cpu_*`,
+`64cpu_*`, `128cpu_*`, and the `gpu-*` partitions.
 
 ## Profile and computer
 
 ```shell
 python3 -m venv ~/aiida-venv
-~/aiida-venv/bin/pip install 'aiida-core>=2.6,<3' 'aiida-eon'
-~/aiida-venv/bin/verdi presto --profile-name eon
+~/aiida-venv/bin/pip install 'aiida-core>=2.6,<3'
+git clone https://github.com/HaoZeke/aiida-eon.git
+cd aiida-eon
+~/aiida-venv/bin/pip install -e .
+VERDI=~/aiida-venv/bin/verdi
+$VERDI presto --profile-name eon
 
-verdi computer setup --config examples/elja/computer.yml
-verdi computer configure core.local elja-slurm
-verdi computer test elja-slurm
+$VERDI computer setup --non-interactive --config examples/elja/computer.yml
+$VERDI computer configure core.local elja-slurm
+$VERDI computer test elja-slurm
 ```
+
+`pip install aiida-eon` only works after the PyPI wheel exists. Until then
+install from this clone.
 
 `examples/elja/computer.yml` matches the campaign `Computer(...)`
 fields: label `elja-slurm`, hostname `localhost`, workdir
@@ -93,9 +102,10 @@ result = run(
 )
 ```
 
-`elja_metadata` sets `queue_name="s-normal"`, `account="chem-ui"`,
-one node, one MPI rank. Older notes mention `any_cpu` and
-`48cpu_*` / `64cpu_*` / `128cpu_*`; those are not the JCC default.
+`elja_metadata` sets `queue_name="s-normal"` (`AllowGroups=HPC-Stefnir`)
+and `account="chem-ui"`, one node, one MPI rank. `any_cpu` is the
+other 2-day CPU queue (`AllowGroups=HPC-Elja`); pass `queue="any_cpu"`
+or `account=...` if your allocation is not `chem-ui` / Stefnir.
 
 Hold a long campaign in a named tmux on the login node. The JCC
 campaign used blocking `run` (`submit=False`), not a RabbitMQ daemon.

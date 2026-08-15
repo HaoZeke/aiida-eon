@@ -11,7 +11,10 @@ from typing import Any
 
 ELJA_COMPUTER_LABEL = "elja-slurm"
 ELJA_ACCOUNT = "chem-ui"
+# JCC campaign and live sinfo both use s-normal (AllowGroups=HPC-Stefnir).
+# any_cpu is the other 2-day CPU queue (AllowGroups=HPC-Elja).
 ELJA_QUEUE = "s-normal"
+ELJA_QUEUE_ANY_CPU = "any_cpu"
 ELJA_POLL_INTERVAL_S = 30.0
 
 
