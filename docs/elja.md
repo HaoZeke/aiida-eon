@@ -17,10 +17,9 @@ Live `sinfo` also lists `any_cpu`, `short`, `long`, `48cpu_*`,
 
 ```shell
 python3 -m venv ~/aiida-venv
-~/aiida-venv/bin/pip install 'aiida-core>=2.6,<3'
+~/aiida-venv/bin/pip install 'aiida-core>=2.6,<3' aiida-eon
 git clone https://github.com/HaoZeke/aiida-eon.git
 cd aiida-eon
-~/aiida-venv/bin/pip install -e .
 VERDI=~/aiida-venv/bin/verdi
 $VERDI presto --profile-name eon
 
@@ -28,9 +27,6 @@ $VERDI computer setup --non-interactive --config examples/elja/computer.yml
 $VERDI computer configure core.local elja-slurm
 $VERDI computer test elja-slurm
 ```
-
-`pip install aiida-eon` only works after the PyPI wheel exists. Until then
-install from this clone.
 
 `examples/elja/computer.yml` matches the campaign `Computer(...)`
 fields: label `elja-slurm`, hostname `localhost`, workdir
