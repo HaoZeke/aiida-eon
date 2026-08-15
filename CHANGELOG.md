@@ -1,8 +1,13 @@
 # Changelog
 
+## 0.3.2
+
+Rewrote the 0.3.1 changelog line. No code change.
+
 ## 0.3.1
 
-Documentation and the 0.3.0 notes now follow the eOn user-guide voice.
+Rewrote the plugin README, Elja notes, registry page, and the 0.3.0
+changelog entries.
 
 ## 0.3.0
 

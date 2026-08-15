@@ -11,8 +11,9 @@ searches, or run `python -m eon.server` for superbasin kinetic Monte
 Carlo. In-process Matter work is
 [pyeonclient](https://eondocs.org/user_guide/pyeonclient.html).
 
-The matching eOn user-guide page is
-`docs/source/user_guide/aiida.md` in the eOn tree.
+The eOn user-guide page is
+[user_guide/aiida.md](https://github.com/HaoZeke/eOn/blob/docs/aiida-eon/docs/source/user_guide/aiida.md)
+([TheochemUI/eOn#396](https://github.com/TheochemUI/eOn/pull/396)).
 
 `config.ini` is `rgpycrumbs.eon.helpers.write_eon_config` /
 `eon_schema.config.write_ini`. Saddle codes are
