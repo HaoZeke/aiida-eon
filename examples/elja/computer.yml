@@ -1,0 +1,11 @@
+---
+label: elja-slurm
+hostname: localhost
+description: Elja login-node AiiDA computer (core.local + Slurm)
+transport: core.local
+scheduler: core.slurm
+shebang: "#!/bin/bash -l"
+work_dir: /users/home/{username}/aiida-eon-work
+use_double_quotes: false
+prepend_text: ""
+append_text: ""

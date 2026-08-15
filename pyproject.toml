@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiida-eon"
-version = "0.1.0"
-description = "AiiDA plugin for eOn (eonclient: config.ini + .con + results.dat)"
+version = "0.2.0"
+description = "AiiDA 2 plugin for eOn: eonclient jobs, CON data, and workchains"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Rohit Goswami", email = "rog32@hi.is" }]
@@ -16,10 +16,13 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Chemistry",
 ]
 dependencies = [
-    "aiida-core>=2.4,<3",
+    "aiida-core>=2.6,<3",
 ]
 
 [project.optional-dependencies]
@@ -33,12 +36,28 @@ docs = [
 [project.urls]
 Homepage = "https://github.com/HaoZeke/aiida-eon"
 Source = "https://github.com/HaoZeke/aiida-eon"
+Documentation = "https://github.com/HaoZeke/aiida-eon#readme"
+Issues = "https://github.com/HaoZeke/aiida-eon/issues"
 
 [project.entry-points."aiida.calculations"]
 eon = "aiida_eon.calculations:EonCalculation"
 
 [project.entry-points."aiida.parsers"]
 eon = "aiida_eon.parsers:EonParser"
+
+[project.entry-points."aiida.workflows"]
+"eon.minimize" = "aiida_eon.workflows.minimize:EonMinimizeWorkChain"
+"eon.neb" = "aiida_eon.workflows.neb:EonNebWorkChain"
+"eon.saddle" = "aiida_eon.workflows.saddle:EonSaddleSearchWorkChain"
+"eon.process_search" = "aiida_eon.workflows.process_search:EonProcessSearchWorkChain"
+"eon.prefactor" = "aiida_eon.workflows.prefactor:EonPrefactorWorkChain"
+"eon.akmc" = "aiida_eon.workflows.akmc:EonAkmcWorkChain"
+
+[project.entry-points."aiida.data"]
+"eon.con" = "aiida_eon.data.con:ConData"
+
+[project.entry-points."aiida.cmdline.data"]
+eon = "aiida_eon.cli:data_cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]

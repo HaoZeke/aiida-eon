@@ -2,7 +2,14 @@
 
 from pathlib import Path
 
-from aiida_eon.io import read_ini, results_dat_to_dict, write_ini
+from aiida_eon.io import (
+    job_result_scalars,
+    parse_fd_table,
+    parse_results_dat,
+    read_ini,
+    results_dat_to_dict,
+    write_ini,
+)
 
 
 def test_write_ini_preserves_section_and_option_case(tmp_path: Path):
@@ -55,3 +62,24 @@ def test_results_dat_to_dict_scalars():
 
 def test_results_dat_skips_short_lines():
     assert results_dat_to_dict("\nonlyone\n") == {}
+
+
+def test_parse_fd_table_and_timing_footer():
+    text = (
+        "dR curvature\n"
+        "0.001 1.23\n"
+        "0.002 1.24\n"
+        "1.5 time_seconds\n"
+    )
+    parsed = parse_fd_table(text)
+    assert parsed["table_header"] == ["dR", "curvature"]
+    assert parsed["table"][0] == [0.001, 1.23]
+    assert parsed["time_seconds"] == 1.5
+    assert parse_results_dat(text, style="fd_table")["table"][1] == [0.002, 1.24]
+
+
+def test_job_result_scalars_energy_fallback():
+    parsed = results_dat_to_dict(" -2.5 Energy\n 12 total_force_calls\n")
+    scalars = job_result_scalars(parsed)
+    assert scalars["potential_energy"] == -2.5
+    assert scalars["force_calls"]["total"] == 12

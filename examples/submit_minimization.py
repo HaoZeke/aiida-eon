@@ -12,7 +12,9 @@ from pathlib import Path
 
 from aiida import load_profile, orm
 from aiida.engine import run
-from aiida.plugins import CalculationFactory
+from aiida.plugins import CalculationFactory, DataFactory
+
+from aiida_eon.helpers import localhost_metadata
 
 
 def main() -> None:
@@ -25,6 +27,7 @@ def main() -> None:
 
     load_profile()
     EonCalculation = CalculationFactory("eon")
+    ConData = DataFactory("eon.con")
     inputs = {
         "code": orm.load_code(args.code),
         "parameters": orm.Dict(
@@ -34,13 +37,8 @@ def main() -> None:
                 "Optimizer": {"opt_method": "lbfgs", "converged_force": 0.01},
             }
         ),
-        "structure": orm.SinglefileData(file=str(args.structure.resolve())),
-        "metadata": {
-            "options": {
-                "resources": {"num_machines": 1, "num_mpiprocs_per_machine": 1},
-                "max_wallclock_seconds": 600,
-            }
-        },
+        "structure": ConData.from_path(args.structure),
+        "metadata": localhost_metadata(wallclock_seconds=600),
     }
     result = run(EonCalculation, **inputs)
     print(result["results"].get_dict())
