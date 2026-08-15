@@ -57,8 +57,13 @@ def test_calculation_spec_ports():
 def test_workchain_specs_expose_calc():
     from aiida_eon.workflows import EonAkmcWorkChain, EonMinimizeWorkChain, EonNebWorkChain
 
-    for cls in (EonMinimizeWorkChain, EonNebWorkChain, EonAkmcWorkChain):
-        spec = cls.spec()
+    min_spec = EonMinimizeWorkChain.spec()
+    assert min_spec.inputs["calc"]["structure"].required
+    neb_spec = EonNebWorkChain.spec()
+    assert neb_spec.inputs["calc"]["product"].required
+    akmc_spec = EonAkmcWorkChain.spec()
+    assert akmc_spec.inputs["calc"]["structure"].required
+    for spec in (min_spec, neb_spec, akmc_spec):
         assert "calc" in spec.inputs
         assert "code" in spec.inputs["calc"]
         assert "parameters" in spec.inputs
@@ -80,4 +85,4 @@ def test_elja_helpers():
 def test_version():
     import aiida_eon
 
-    assert aiida_eon.__version__ == "0.2.0"
+    assert aiida_eon.__version__ == "0.2.1"

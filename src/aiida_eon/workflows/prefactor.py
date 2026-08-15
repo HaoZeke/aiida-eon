@@ -22,6 +22,8 @@ class EonPrefactorWorkChain(WorkChain):
             required=False,
             help="INI sections. Main.job is forced to prefactor.",
         )
+        spec.inputs["calc"]["saddle"].required = True
+        spec.inputs["calc"]["product"].required = True
         spec.outline(cls.setup, cls.run_client, cls.finalize)
         spec.expose_outputs(EonCalculation)
         spec.exit_code(400, "ERROR_SUBPROCESS", message="eonclient prefactor failed.")
@@ -33,7 +35,8 @@ class EonPrefactorWorkChain(WorkChain):
 
     def setup(self):
         calc_in = self.exposed_inputs(EonCalculation, namespace="calc")
-        if not all(key in calc_in for key in ("reactant", "saddle", "product")):
+        has_reactant = "reactant" in calc_in or "structure" in calc_in
+        if not has_reactant or "saddle" not in calc_in or "product" not in calc_in:
             return self.exit_codes.ERROR_MISSING_TRIPLET
         raw = self.inputs.parameters.get_dict() if "parameters" in self.inputs else {}
         self.ctx.parameters = force_job(raw, "prefactor")
@@ -41,6 +44,9 @@ class EonPrefactorWorkChain(WorkChain):
     def run_client(self):
         inputs = dict(self.exposed_inputs(EonCalculation, namespace="calc"))
         inputs["parameters"] = self.ctx.parameters
+        if "reactant" not in inputs and "structure" in inputs:
+            inputs["reactant"] = inputs["structure"]
+        inputs.pop("structure", None)
         return ToContext(calc=self.submit(EonCalculation, **inputs))
 
     def finalize(self):

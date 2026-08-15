@@ -8,8 +8,11 @@ the eOn monorepo at import time.
 from __future__ import annotations
 
 import configparser
+import re
 from pathlib import Path
 from typing import Any, Mapping
+
+_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 from .jobs import JobSpec
 
@@ -66,14 +69,25 @@ def _parse_scalar(raw: str) -> Any:
 
 
 def results_dat_to_dict(text: str) -> dict[str, Any]:
-    """Parse classic ``results.dat`` lines (``value key``) into a dict."""
+    """Parse classic ``results.dat`` lines into a dict.
+
+    Writers use ``value key``. Multi-word status strings put the key
+    last (``Too many iterations termination_reason_text``).
+    """
     results: dict[str, Any] = {}
     for line in text.splitlines():
         parts = line.split()
         if len(parts) < 2:
             continue
-        key = parts[1]
-        results[key] = _parse_scalar(parts[0])
+        if _KEY_RE.match(parts[-1]) and (
+            len(parts) > 2 or not _KEY_RE.match(parts[0])
+        ):
+            key = parts[-1]
+            raw = " ".join(parts[:-1])
+        else:
+            key = parts[1]
+            raw = parts[0]
+        results[key] = raw if " " in raw else _parse_scalar(raw)
     return results
 
 
@@ -103,6 +117,24 @@ def parse_fd_table(text: str) -> dict[str, Any]:
     return out
 
 
+def job_failed(parsed: Mapping[str, Any]) -> bool:
+    """True when results.dat reports a failed client job."""
+    reason = parsed.get("termination_reason")
+    if isinstance(reason, int) and reason != 0:
+        return True
+    good = parsed.get("good")
+    if good is False:
+        return True
+    if isinstance(good, str) and good.lower() == "false":
+        return True
+    converged = parsed.get("converged")
+    if converged in (False, 0):
+        return True
+    if isinstance(converged, str) and converged.lower() == "false":
+        return True
+    return False
+
+
 def parse_results_dat(text: str, style: str = "value_key") -> dict[str, Any]:
     """Dispatch on the job's ``results_style``."""
     if style == "fd_table":
@@ -113,7 +145,7 @@ def parse_results_dat(text: str, style: str = "value_key") -> dict[str, Any]:
 def job_result_scalars(parsed: Mapping[str, Any]) -> dict[str, Any]:
     """Map parsed results.dat keys onto JobResult-oriented names."""
     out: dict[str, Any] = {
-        "status_code": parsed.get("termination_reason", 0),
+        "status_code": parsed.get("termination_reason"),
         "status_text": parsed.get("termination_reason_text", ""),
         "job_type": parsed.get("job_type", ""),
         "potential_type": parsed.get("potential_type", ""),

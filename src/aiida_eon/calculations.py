@@ -115,8 +115,8 @@ class EonCalculation(CalcJob):
             valid_type=SinglefileData,
             required=False,
             dynamic=True,
-            help="Arbitrary extra workdir files. Destination is the node "
-            "filename (or the namespace key if you set filename).",
+            help="Arbitrary extra workdir files. Destination is the "
+            "namespace key (extra_files['ts.con'] -> ts.con).",
         )
         spec.input(
             "potfiles",
@@ -159,6 +159,12 @@ class EonCalculation(CalcJob):
             "ERROR_UNSUPPORTED_JOB",
             message="parameters.Main.job is not an eonclient CalcJob.",
         )
+        spec.exit_code(
+            330,
+            "ERROR_JOB_FAILED",
+            message="eonclient wrote a non-zero termination_reason "
+            "(or good/converged is false).",
+        )
 
     def prepare_for_submission(self, folder):
         raw = self.inputs.parameters.get_dict()
@@ -197,7 +203,7 @@ class EonCalculation(CalcJob):
         if "extra_files" in self.inputs:
             extras = self.inputs.extra_files
             for key, node in extras.items():
-                dest = node.filename or key
+                dest = str(key)
                 if dest in copied_dests:
                     continue
                 local_copy_list.append((node.uuid, node.filename, dest))

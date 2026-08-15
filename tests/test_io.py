@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from aiida_eon.io import (
+    job_failed,
     job_result_scalars,
     parse_fd_table,
     parse_results_dat,
@@ -83,3 +84,18 @@ def test_job_result_scalars_energy_fallback():
     scalars = job_result_scalars(parsed)
     assert scalars["potential_energy"] == -2.5
     assert scalars["force_calls"]["total"] == 12
+    assert scalars["status_code"] is None
+
+
+def test_results_dat_multiword_status_text():
+    parsed = results_dat_to_dict(
+        "3 termination_reason\n"
+        "Too many iterations termination_reason_text\n"
+    )
+    assert parsed["termination_reason"] == 3
+    assert parsed["termination_reason_text"] == "Too many iterations"
+    assert job_result_scalars(parsed)["status_code"] == 3
+    assert job_failed(parsed)
+    assert not job_failed({"termination_reason": 0})
+    assert job_failed({"good": "false"})
+    assert job_failed({"converged": False})

@@ -98,8 +98,14 @@ CLIENT_JOBS: dict[str, JobSpec] = {
         required_inputs=("reactant.con", "product.con"),
         optional_inputs=("ts.con",),
         output_cons=("neb.con", "sp.con", "neb_maximage.con"),
-        extra_outputs=("neb.dat", "peakNN_mode.dat"),
-        retrieve_globs=("neb.dat", "neb_path_*.con", "peakNN_pos.con", "peakNN_mode.dat"),
+        extra_outputs=("neb.dat",),
+        retrieve_globs=(
+            "neb.dat",
+            "neb_*.dat",
+            "neb_path_*.con",
+            "peak*_pos.con",
+            "peak*_mode.dat",
+        ),
         notes="structure maps to reactant.con. Geometric springs: "
         "[Nudged Elastic Band] elastic_band. Path init: LINEAR / IDPP / "
         "IDPP_COLLECTIVE / SIDPP / SIDPP_ZBL / FILE.",

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiida-eon"
-version = "0.2.0"
+version = "0.2.1"
 description = "AiiDA 2 plugin for eOn: eonclient jobs, CON data, and workchains"
 readme = "README.md"
 license = { text = "MIT" }

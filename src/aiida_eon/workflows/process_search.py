@@ -22,6 +22,7 @@ class EonProcessSearchWorkChain(WorkChain):
             required=False,
             help="INI sections. Main.job is forced to process_search.",
         )
+        spec.inputs["calc"]["structure"].required = True
         spec.outline(cls.setup, cls.run_client, cls.finalize)
         spec.expose_outputs(EonCalculation)
         spec.exit_code(

@@ -31,6 +31,7 @@ class EonNebWorkChain(WorkChain):
             required=False,
             help="INI sections. Main.job is forced to nudged_elastic_band.",
         )
+        spec.inputs["calc"]["product"].required = True
         spec.outline(cls.setup, cls.run_client, cls.finalize)
         spec.expose_outputs(EonCalculation)
         spec.exit_code(400, "ERROR_SUBPROCESS", message="eonclient NEB failed.")
@@ -53,6 +54,7 @@ class EonNebWorkChain(WorkChain):
         inputs["parameters"] = self.ctx.parameters
         if "reactant" not in inputs and "structure" in inputs:
             inputs["reactant"] = inputs["structure"]
+        inputs.pop("structure", None)
         return ToContext(calc=self.submit(EonCalculation, **inputs))
 
     def finalize(self):

@@ -22,6 +22,7 @@ class EonMinimizeWorkChain(WorkChain):
             required=False,
             help="INI sections. Main.job is forced to minimization.",
         )
+        spec.inputs["calc"]["structure"].required = True
         spec.outline(cls.setup, cls.run_client, cls.finalize)
         spec.expose_outputs(EonCalculation)
         spec.exit_code(

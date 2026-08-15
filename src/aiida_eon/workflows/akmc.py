@@ -47,6 +47,7 @@ class EonAkmcWorkChain(WorkChain):
             ),
             cls.finalize,
         )
+        spec.inputs["calc"]["structure"].required = True
         spec.output("summary", valid_type=Dict)
         spec.output_namespace("searches", dynamic=True)
         spec.exit_code(
@@ -66,6 +67,11 @@ class EonAkmcWorkChain(WorkChain):
             return self.exit_codes.ERROR_MISSING_STRUCTURE
         raw = self.inputs.parameters.get_dict() if "parameters" in self.inputs else {}
         self.ctx.parameters = force_job(raw, "process_search")
+        main = (raw.get("Main") or {})
+        try:
+            self.ctx.base_seed = int(main.get("random_seed") or 0)
+        except (TypeError, ValueError):
+            self.ctx.base_seed = 0
         self.ctx.n_searches = int(self.inputs.n_searches)
         self.ctx.max_concurrent = max(1, int(self.inputs.max_concurrent))
         self.ctx.submitted = 0
@@ -82,10 +88,20 @@ class EonAkmcWorkChain(WorkChain):
         running = {}
         keys = []
         base = dict(self.exposed_inputs(EonCalculation, namespace="calc"))
-        base["parameters"] = self.ctx.parameters
+        template = self.ctx.parameters.get_dict()
         for _ in range(batch):
             key = f"search_{self.ctx.submitted:04d}"
-            running[key] = self.submit(EonCalculation, **base)
+            sections = {name: dict(opts) for name, opts in template.items()}
+            main = dict(sections.get("Main") or {})
+            main["job"] = "process_search"
+            main["random_seed"] = self.ctx.base_seed + self.ctx.submitted + 1
+            sections["Main"] = main
+            inputs = dict(base)
+            inputs["parameters"] = Dict(dict=sections)
+            metadata = dict(inputs.get("metadata") or {})
+            metadata["call_link_label"] = key
+            inputs["metadata"] = metadata
+            running[key] = self.submit(EonCalculation, **inputs)
             keys.append(key)
             self.ctx.submitted += 1
         self.ctx.batch_keys = keys

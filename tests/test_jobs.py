@@ -67,7 +67,10 @@ def test_neb_requires_endpoints():
     spec = get_job_spec("nudged_elastic_band")
     assert "reactant.con" in spec.required_inputs
     assert "product.con" in spec.required_inputs
-    assert "neb.dat" in retrieve_list_for(spec)
+    retrieve = retrieve_list_for(spec)
+    assert "neb.dat" in retrieve
+    assert "peak*_mode.dat" in retrieve
+    assert "neb_*.dat" in retrieve
 
 
 def test_fd_style():

@@ -9,10 +9,19 @@ from aiida.orm import Dict, SinglefileData
 from aiida.parsers.parser import Parser
 
 from .data import ConData
-from .io import job_result_scalars, link_label, parse_results_dat
+from .io import job_failed, job_result_scalars, link_label, parse_results_dat
 from .jobs import get_job_spec, is_client_job, job_from_parameters
 
 _SIDECAR_SUFFIXES = (".dat", ".xyz", ".json", ".log", ".ckpt")
+_INPUT_CON_SKIP = frozenset(
+    {
+        "pos.con",
+        "displacement.con",
+        "matter1.con",
+        "matter2.con",
+        "ts.con",
+    }
+)
 
 
 class EonParser(Parser):
@@ -43,7 +52,7 @@ class EonParser(Parser):
         self.out("scalars", Dict(dict=job_result_scalars(parsed)))
 
         for name in sorted(retrieved):
-            if name in {"results.dat"}:
+            if name in {"results.dat"} or name in _INPUT_CON_SKIP:
                 continue
             path = PurePosixPath(name)
             if path.suffix == ".con":
@@ -62,4 +71,6 @@ class EonParser(Parser):
                 if dest not in self.outputs:
                     self.out(dest, node)
 
+        if job_failed(parsed):
+            return self.exit_codes.ERROR_JOB_FAILED
         return ExitCode(0)

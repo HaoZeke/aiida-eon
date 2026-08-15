@@ -22,6 +22,7 @@ class EonSaddleSearchWorkChain(WorkChain):
             required=False,
             help="INI sections. Main.job is forced to saddle_search.",
         )
+        spec.inputs["calc"]["structure"].required = True
         spec.outline(cls.setup, cls.run_client, cls.finalize)
         spec.expose_outputs(EonCalculation)
         spec.exit_code(400, "ERROR_SUBPROCESS", message="eonclient saddle search failed.")
