@@ -82,6 +82,24 @@ def test_results_dat_to_dict_scalars():
     assert parsed["Energy"] == -2.5
 
 
+def test_results_dat_uses_explicit_compatibility_fields():
+    parsed = results_dat_to_dict(
+        """0 termination_reason
+metatomic engine_id
+0.14.8 compatibility_readcon_min_version
+2.0.0 engine_version
+abc123 engine_build_identity
+"""
+    )
+    assert parsed["compatibility_record"]["readcon"]["min_version"] == "0.14.8"
+    assert parsed["compatibility_record"]["engine"] == {
+        "id": "metatomic",
+        "version": "2.0.0",
+        "abi_version": None,
+        "build_identity": "abc123",
+    }
+
+
 def test_results_dat_skips_short_lines():
     assert results_dat_to_dict("\nonlyone\n") == {}
 

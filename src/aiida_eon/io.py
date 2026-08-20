@@ -47,16 +47,35 @@ def compatibility_record(parsed: Mapping[str, Any] | None = None) -> dict[str, A
     return {
         "schema": COMPATIBILITY_SCHEMA,
         "readcon": {
-            "spec_version": RESULTS_COMPATIBILITY["con_spec_version"],
-            "min_version": RESULTS_COMPATIBILITY["readcon_min_version"],
+            "spec_version": values.get(
+                "compatibility_readcon_spec_version",
+                RESULTS_COMPATIBILITY["con_spec_version"],
+            ),
+            "min_version": values.get(
+                "compatibility_readcon_min_version",
+                RESULTS_COMPATIBILITY["readcon_min_version"],
+            ),
         },
-        "eon_schema": {"min_version": RESULTS_COMPATIBILITY["eon_schema_min_version"]},
-        "rgpycrumbs": {"min_version": RESULTS_COMPATIBILITY["rgpycrumbs_min_version"]},
+        "eon_schema": {
+            "min_version": values.get(
+                "compatibility_eon_schema_min_version",
+                RESULTS_COMPATIBILITY["eon_schema_min_version"],
+            )
+        },
+        "rgpycrumbs": {
+            "min_version": values.get(
+                "compatibility_rgpycrumbs_min_version",
+                RESULTS_COMPATIBILITY["rgpycrumbs_min_version"],
+            )
+        },
         "chemparseplot": {
-            "min_version": RESULTS_COMPATIBILITY["chemparseplot_min_version"]
+            "min_version": values.get(
+                "compatibility_chemparseplot_min_version",
+                RESULTS_COMPATIBILITY["chemparseplot_min_version"],
+            )
         },
         "engine": {
-            "id": values.get("potential_type", ""),
+            "id": values.get("engine_id", values.get("potential_type", "")),
             "version": values.get("engine_version"),
             "abi_version": values.get("engine_abi_version"),
             "build_identity": values.get("engine_build_identity"),
