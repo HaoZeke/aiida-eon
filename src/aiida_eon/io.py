@@ -44,7 +44,7 @@ def compatibility_record(parsed: Mapping[str, Any] | None = None) -> dict[str, A
     package versions.
     """
     values = parsed or {}
-    return {
+    record = {
         "schema": COMPATIBILITY_SCHEMA,
         "readcon": {
             "spec_version": values.get(
@@ -81,6 +81,31 @@ def compatibility_record(parsed: Mapping[str, Any] | None = None) -> dict[str, A
             "build_identity": values.get("engine_build_identity"),
         },
     }
+    stamp_keys = (
+        "compatibility_engine_protocol_family",
+        "compatibility_engine_protocol_major",
+        "compatibility_engine_protocol_minor",
+        "compatibility_engine_abi_major",
+        "compatibility_engine_abi_minor",
+        "compatibility_engine_layout_revision",
+        "engine_build_identity",
+    )
+    if (
+        values.get("compatibility_schema") == COMPATIBILITY_SCHEMA
+        and all(key in values for key in stamp_keys)
+    ):
+        record["engine_compatibility"] = {
+            "schema": COMPATIBILITY_SCHEMA,
+            "engineId": record["engine"]["id"],
+            "protocolFamily": values["compatibility_engine_protocol_family"],
+            "protocolMajor": values["compatibility_engine_protocol_major"],
+            "protocolMinor": values["compatibility_engine_protocol_minor"],
+            "abiMajor": values["compatibility_engine_abi_major"],
+            "abiMinor": values["compatibility_engine_abi_minor"],
+            "layoutRevision": values["compatibility_engine_layout_revision"],
+            "buildIdentity": values["engine_build_identity"],
+        }
+    return record
 
 _TIMING_KEYS = frozenset({"time_seconds", "user_time", "system_time"})
 _KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")

@@ -100,6 +100,32 @@ abc123 engine_build_identity
     }
 
 
+def test_results_dat_preserves_complete_engine_compatibility_stamp():
+    parsed = results_dat_to_dict(
+        """eon.compatibility.v1 compatibility_schema
+eon engine_id
+eon.objective compatibility_engine_protocol_family
+1 compatibility_engine_protocol_major
+0 compatibility_engine_protocol_minor
+1 compatibility_engine_abi_major
+0 compatibility_engine_abi_minor
+2 compatibility_engine_layout_revision
+eon-2.11.1+abc123 engine_build_identity
+"""
+    )
+    assert parsed["compatibility_record"]["engine_compatibility"] == {
+        "schema": "eon.compatibility.v1",
+        "engineId": "eon",
+        "protocolFamily": "eon.objective",
+        "protocolMajor": 1,
+        "protocolMinor": 0,
+        "abiMajor": 1,
+        "abiMinor": 0,
+        "layoutRevision": 2,
+        "buildIdentity": "eon-2.11.1+abc123",
+    }
+
+
 def test_results_dat_skips_short_lines():
     assert results_dat_to_dict("\nonlyone\n") == {}
 
