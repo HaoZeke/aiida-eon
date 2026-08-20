@@ -54,6 +54,17 @@ def test_calculation_spec_ports():
     assert spec.inputs["metadata"]["options"]["parser_name"].default == "eon"
 
 
+def test_condata_persists_compatibility_metadata(tmp_path):
+    from aiida_eon.data import ConData
+
+    path = tmp_path / "pos.con"
+    path.write_text("1\n", encoding="utf-8")
+    node = ConData.from_path(path)
+    assert node.compatibility["schema"] == "eon.compatibility.v1"
+    assert node.compatibility["readcon"]["spec_version"] == 3
+    assert node.get_text() == "1\n"
+
+
 def test_workchain_specs_expose_calc():
     from aiida_eon.workflows import EonAkmcWorkChain, EonMinimizeWorkChain, EonNebWorkChain
 

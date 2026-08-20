@@ -7,6 +7,15 @@ from pathlib import Path
 from aiida.orm import SinglefileData
 
 
+CON_COMPATIBILITY = {
+    "schema": "eon.compatibility.v1",
+    "readcon": {"spec_version": 3, "min_version": "0.14.7"},
+    "eon_schema": {"min_version": "0.2.0"},
+    "rgpycrumbs": {"min_version": "1.10.4"},
+    "chemparseplot": {"min_version": "1.9.17"},
+}
+
+
 class ConData(SinglefileData):
     """eOn CON text (readcon / ``pos.con``).
 
@@ -17,6 +26,12 @@ class ConData(SinglefileData):
 
     def __init__(self, file, filename: str | None = None, **kwargs):
         super().__init__(file=file, filename=filename or "pos.con", **kwargs)
+        self.base.attributes.set("compatibility", CON_COMPATIBILITY)
+
+    @property
+    def compatibility(self) -> dict:
+        """Versioned CON and stack compatibility metadata."""
+        return self.base.attributes.get("compatibility")
 
     @classmethod
     def from_path(cls, path: str | Path, filename: str | None = None) -> ConData:

@@ -24,6 +24,7 @@ except ImportError:  # eon-schema < 0.2.3 (PyPI 0.2.2 has no jobs module)
 IniSections = dict[str, dict[str, Any]]
 
 RESULTS_SCHEMA = "eon.results.v1"
+COMPATIBILITY_SCHEMA = "eon.compatibility.v1"
 RESULTS_COMPATIBILITY = {
     "con_spec_version": 3,
     "readcon_min_version": "0.14.7",
@@ -31,6 +32,36 @@ RESULTS_COMPATIBILITY = {
     "rgpycrumbs_min_version": "1.10.4",
     "chemparseplot_min_version": "1.9.17",
 }
+
+
+def compatibility_record(parsed: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Return the versioned stack identity carried by an eOn result.
+
+    The raw ``results.dat`` keys remain at the top level. This nested record is
+    the queryable provenance surface for consumers that need to reject an
+    artifact without inspecting filenames or the execution environment.
+    Missing engine build fields stay ``None`` rather than being inferred from
+    package versions.
+    """
+    values = parsed or {}
+    return {
+        "schema": COMPATIBILITY_SCHEMA,
+        "readcon": {
+            "spec_version": RESULTS_COMPATIBILITY["con_spec_version"],
+            "min_version": RESULTS_COMPATIBILITY["readcon_min_version"],
+        },
+        "eon_schema": {"min_version": RESULTS_COMPATIBILITY["eon_schema_min_version"]},
+        "rgpycrumbs": {"min_version": RESULTS_COMPATIBILITY["rgpycrumbs_min_version"]},
+        "chemparseplot": {
+            "min_version": RESULTS_COMPATIBILITY["chemparseplot_min_version"]
+        },
+        "engine": {
+            "id": values.get("potential_type", ""),
+            "version": values.get("engine_version"),
+            "abi_version": values.get("engine_abi_version"),
+            "build_identity": values.get("engine_build_identity"),
+        },
+    }
 
 _TIMING_KEYS = frozenset({"time_seconds", "user_time", "system_time"})
 _KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -87,6 +118,7 @@ def results_dat_to_dict(text: str) -> dict[str, Any]:
     return {
         "schema": RESULTS_SCHEMA,
         "compatibility": dict(RESULTS_COMPATIBILITY),
+        "compatibility_record": compatibility_record(parsed),
         **parsed,
     }
 
@@ -113,6 +145,7 @@ def parse_fd_table(text: str) -> dict[str, Any]:
     out: dict[str, Any] = {
         "schema": RESULTS_SCHEMA,
         "compatibility": dict(RESULTS_COMPATIBILITY),
+        "compatibility_record": compatibility_record(extras),
         "table": rows,
         **extras,
     }
@@ -188,6 +221,7 @@ def job_result_scalars(parsed: Mapping[str, Any]) -> dict[str, Any]:
         "wall_time_seconds": parsed.get("time_seconds", 0.0),
         "user_time_seconds": parsed.get("user_time", 0.0),
         "system_time_seconds": parsed.get("system_time", 0.0),
+        "compatibility": parsed.get("compatibility_record", compatibility_record(parsed)),
     }
     if "simulation_time" in parsed:
         out["simulation_time"] = parsed["simulation_time"]
@@ -229,6 +263,7 @@ OUTPUT_CON_NAMES = (
 
 __all__ = [
     "EONSaddleStatus",
+    "compatibility_record",
     "OUTPUT_CON_NAMES",
     "format_ini_value",
     "job_failed",

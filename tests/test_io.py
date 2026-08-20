@@ -70,6 +70,10 @@ def test_results_dat_to_dict_scalars():
     assert parsed["schema"] == "eon.results.v1"
     assert parsed["compatibility"]["con_spec_version"] == 3
     assert parsed["compatibility"]["readcon_min_version"] == "0.14.7"
+    assert parsed["compatibility_record"]["schema"] == "eon.compatibility.v1"
+    assert parsed["compatibility_record"]["readcon"]["spec_version"] == 3
+    assert parsed["compatibility_record"]["readcon"]["min_version"] == "0.14.7"
+    assert parsed["compatibility_record"]["engine"]["id"] == "lj"
     assert parsed["termination_reason"] == 0
     assert parsed["termination_reason_text"] == "good"
     assert parsed["job_type"] == "minimization"
@@ -103,6 +107,7 @@ def test_job_result_scalars_energy_fallback():
     assert scalars["potential_energy"] == -2.5
     assert scalars["force_calls"]["total"] == 12
     assert scalars["status_code"] is None
+    assert scalars["compatibility"]["schema"] == "eon.compatibility.v1"
 
 
 def test_results_dat_multiword_status_text():
