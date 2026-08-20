@@ -67,6 +67,9 @@ def test_results_dat_to_dict_scalars():
         "-2.5 Energy\n"
     )
     parsed = results_dat_to_dict(sample)
+    assert parsed["schema"] == "eon.results.v1"
+    assert parsed["compatibility"]["con_spec_version"] == 3
+    assert parsed["compatibility"]["readcon_min_version"] == "0.14.7"
     assert parsed["termination_reason"] == 0
     assert parsed["termination_reason_text"] == "good"
     assert parsed["job_type"] == "minimization"
@@ -87,6 +90,7 @@ def test_parse_fd_table_and_timing_footer():
         "1.5 time_seconds\n"
     )
     parsed = parse_fd_table(text)
+    assert parsed["schema"] == "eon.results.v1"
     assert parsed["table_header"] == ["dR", "curvature"]
     assert parsed["table"][0] == [0.001, 1.23]
     assert parsed["time_seconds"] == 1.5

@@ -23,6 +23,15 @@ except ImportError:  # eon-schema < 0.2.3 (PyPI 0.2.2 has no jobs module)
 
 IniSections = dict[str, dict[str, Any]]
 
+RESULTS_SCHEMA = "eon.results.v1"
+RESULTS_COMPATIBILITY = {
+    "con_spec_version": 3,
+    "readcon_min_version": "0.14.7",
+    "eon_schema_min_version": "0.2.0",
+    "rgpycrumbs_min_version": "1.10.4",
+    "chemparseplot_min_version": "1.9.17",
+}
+
 _TIMING_KEYS = frozenset({"time_seconds", "user_time", "system_time"})
 _KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -66,13 +75,18 @@ def results_dat_to_dict(text: str) -> dict[str, Any]:
     contract and restores multi-word ``termination_reason_text``.
     """
     if _schema_results_dat_to_dict is None:
-        return _local_results_dat_to_dict(text)
-    parsed = _schema_results_dat_to_dict(text)
-    for line in text.splitlines():
-        parts = line.split()
-        if len(parts) > 2 and parts[-1] == "termination_reason_text":
-            parsed["termination_reason_text"] = " ".join(parts[:-1])
-    return parsed
+        parsed = _local_results_dat_to_dict(text)
+    else:
+        parsed = _schema_results_dat_to_dict(text)
+        for line in text.splitlines():
+            parts = line.split()
+            if len(parts) > 2 and parts[-1] == "termination_reason_text":
+                parsed["termination_reason_text"] = " ".join(parts[:-1])
+    return {
+        "schema": RESULTS_SCHEMA,
+        "compatibility": dict(RESULTS_COMPATIBILITY),
+        **parsed,
+    }
 
 
 def parse_fd_table(text: str) -> dict[str, Any]:
@@ -94,7 +108,12 @@ def parse_fd_table(text: str) -> dict[str, Any]:
             rows.append([float(item) for item in parts])
         except ValueError:
             extras.update(results_dat_to_dict(line))
-    out: dict[str, Any] = {"table": rows, **extras}
+    out: dict[str, Any] = {
+        "schema": RESULTS_SCHEMA,
+        "compatibility": dict(RESULTS_COMPATIBILITY),
+        "table": rows,
+        **extras,
+    }
     if header is not None:
         out["table_header"] = header
     return out
