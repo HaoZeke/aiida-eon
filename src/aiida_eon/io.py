@@ -82,6 +82,8 @@ def results_dat_to_dict(text: str) -> dict[str, Any]:
             parts = line.split()
             if len(parts) > 2 and parts[-1] == "termination_reason_text":
                 parsed["termination_reason_text"] = " ".join(parts[:-1])
+    if not parsed:
+        return {}
     return {
         "schema": RESULTS_SCHEMA,
         "compatibility": dict(RESULTS_COMPATIBILITY),
