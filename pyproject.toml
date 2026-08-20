@@ -22,9 +22,9 @@ classifiers = [
 ]
 dependencies = [
     "aiida-core>=2.6,<3",
-    "rgpycrumbs>=1.9",
+    "rgpycrumbs>=1.10.4",
     "eon-schema>=0.2.0",
-    "chemparseplot>=1.8",
+    "chemparseplot>=1.9.17",
 ]
 
 [project.optional-dependencies]
