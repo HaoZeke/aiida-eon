@@ -111,6 +111,11 @@ eon.objective compatibility_engine_protocol_family
 0 compatibility_engine_abi_minor
 2 compatibility_engine_layout_revision
 eon-2.11.1+abc123 engine_build_identity
+3 compatibility_readcon_spec_version
+0.14.7 compatibility_readcon_min_version
+0.2.0 compatibility_eon_schema_min_version
+1.10.4 compatibility_rgpycrumbs_min_version
+1.9.17 compatibility_chemparseplot_min_version
 """
     )
     assert parsed["compatibility_record"]["engine_compatibility"] == {
@@ -123,6 +128,11 @@ eon-2.11.1+abc123 engine_build_identity
         "abiMinor": 0,
         "layoutRevision": 2,
         "buildIdentity": "eon-2.11.1+abc123",
+        "readconSpecVersion": 3,
+        "readconMinVersion": "0.14.7",
+        "eonSchemaMinVersion": "0.2.0",
+        "rgpycrumbsMinVersion": "1.10.4",
+        "chemparseplotMinVersion": "1.9.17",
     }
 
 

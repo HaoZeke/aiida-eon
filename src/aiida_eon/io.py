@@ -94,7 +94,7 @@ def compatibility_record(parsed: Mapping[str, Any] | None = None) -> dict[str, A
         values.get("compatibility_schema") == COMPATIBILITY_SCHEMA
         and all(key in values for key in stamp_keys)
     ):
-        record["engine_compatibility"] = {
+        engine_compatibility = {
             "schema": COMPATIBILITY_SCHEMA,
             "engineId": record["engine"]["id"],
             "protocolFamily": values["compatibility_engine_protocol_family"],
@@ -105,6 +105,17 @@ def compatibility_record(parsed: Mapping[str, Any] | None = None) -> dict[str, A
             "layoutRevision": values["compatibility_engine_layout_revision"],
             "buildIdentity": values["engine_build_identity"],
         }
+        optional_fields = {
+            "readconSpecVersion": "compatibility_readcon_spec_version",
+            "readconMinVersion": "compatibility_readcon_min_version",
+            "eonSchemaMinVersion": "compatibility_eon_schema_min_version",
+            "rgpycrumbsMinVersion": "compatibility_rgpycrumbs_min_version",
+            "chemparseplotMinVersion": "compatibility_chemparseplot_min_version",
+        }
+        for output_key, input_key in optional_fields.items():
+            if input_key in values:
+                engine_compatibility[output_key] = values[input_key]
+        record["engine_compatibility"] = engine_compatibility
     return record
 
 _TIMING_KEYS = frozenset({"time_seconds", "user_time", "system_time"})
